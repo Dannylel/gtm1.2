@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GTM AI — Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #5b3f9b;
+      --purple-light: #eef2ff;
+      --teal: #174b63;
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --text: #1f2937;
+      --text-muted: #6b7280;
+      --text-light: #9ca3af;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+      --warning: #d97706;
+      --warning-bg: #fef3c7;
+      --error: #dc2626;
+      --error-bg: #fecaca;
+      --sidebar-w: 220px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--teal);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 10;
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px 20px;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-brand span { opacity: 0.6; font-weight: 400; font-size: 13px; display: block; margin-top: 2px; }
+
+    .sidebar-nav { padding: 12px 0; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover { color: white; background: rgba(255,255,255,0.06); }
+    .nav-item.active {
+      color: white;
+      background: rgba(255,255,255,0.1);
+      border-left-color: white;
+    }
+
+    .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ── Main content ───────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 28px 32px;
+      max-width: 1200px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .page-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+
+    /* ── Cards ───────────────────────────────────────────────── */
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid var(--border);
+    }
+
+    .card-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+    .card-value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+    .card-sub { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+    /* ── Sections ────────────────────────────────────────────── */
+    .sections { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+
+    .section {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    /* ── Tables ──────────────────────────────────────────────── */
+    .tbl {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .tbl th {
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 8px 10px;
+      border-bottom: 2px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .tbl th:hover { color: var(--purple); }
+    .tbl th.r, .tbl td.r { text-align: right; }
+
+    .tbl td {
+      padding: 9px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid #f3f4f6;
+      white-space: nowrap;
+    }
+
+    .tbl tbody tr { cursor: pointer; transition: background 0.1s; }
+    .tbl tbody tr:hover { background: #f8fafc; }
+
+    .small-tbl td { padding: 5px 8px; font-size: 13px; }
+    .small-tbl td:last-child { text-align: right; font-weight: 600; }
+
+    /* ── Tags ────────────────────────────────────────────────── */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .tag-success { background: var(--success-bg); color: var(--success); }
+    .tag-fallback { background: var(--warning-bg); color: var(--warning); }
+    .tag-error { background: var(--error-bg); color: var(--error); }
+
+    /* ── Filter bar ─────────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .filter-group { display: flex; flex-direction: column; gap: 3px; }
+    .filter-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+    .filter-bar select, .filter-bar input {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      background: white;
+      color: var(--text);
+    }
+
+    .filter-bar select:focus, .filter-bar input:focus {
+      border-color: var(--purple);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(91,63,155,0.12);
+    }
+
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-primary { background: var(--purple); color: white; }
+    .btn-primary:hover { background: #4a3080; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--text-muted); }
+
+    /* ── Detail panel ───────────────────────────────────────── */
+    .detail-row td { padding: 0 !important; border-bottom: 2px solid var(--border) !important; }
+
+    .detail-panel {
+      padding: 16px 20px;
+      background: #fafbfc;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .detail-field { font-size: 12px; }
+    .detail-field .dl { color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; font-size: 10px; }
+    .detail-field .dv { margin-top: 2px; font-weight: 500; }
+
+    .error-box {
+      padding: 10px 14px;
+      background: #fef2f2;
+      border-radius: 8px;
+      border-left: 3px solid var(--error);
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 12px;
+      color: #991b1b;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+
+    .answers-box {
+      padding: 10px 14px;
+      background: var(--purple-light);
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .answers-box strong { color: var(--purple); }
+
+    .detail-link { margin-top: 8px; }
+    .detail-link a { color: var(--purple); font-weight: 600; text-decoration: none; font-size: 13px; }
+    .detail-link a:hover { text-decoration: underline; }
+
+    /* ── Pagination ─────────────────────────────────────────── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .pagination .btn { padding: 6px 14px; font-size: 12px; }
+
+    /* ── Loading ─────────────────────────────────────────────── */
+    .spinner { color: var(--text-light); font-style: italic; padding: 40px; text-align: center; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      .sections { grid-template-columns: 1fr; }
+      .detail-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      GTM AI
+      <span>Generation Dashboard</span>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('overview')">
+        <span class="nav-icon">📊</span> Overview
+      </div>
+      <div class="nav-item" onclick="showPage('events')">
+        <span class="nav-icon">📋</span> Events
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      Data refreshes on page load.<br>
+      Use filters to narrow events.
+    </div>
+  </nav>
+
+  <!-- ── Main ── -->
+  <div class="main">
+
+    <!-- ════════ Overview page ════════ -->
+    <div id="page-overview" class="page active">
+      <div class="page-title">Overview</div>
+      <div class="page-sub" id="overview-sub">Loading...</div>
+
+      <div class="cards" id="metric-cards"><div class="spinner">Loading metrics...</div></div>
+
+      <div class="sections" id="overview-sections"><div class="spinner">Loading...</div></div>
+    </div>
+
+    <!-- ════════ Events page ════════ -->
+    <div id="page-events" class="page">
+      <div class="page-title">Generation Events</div>
+      <div class="page-sub">Click any row to inspect. Use filters to narrow results.</div>
+
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Outcome</span>
+          <select id="f-outcome">
+            <option value="">All</option>
+            <option value="success">Success</option>
+            <option value="fallback">Fallback</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Fallback Reason</span>
+          <select id="f-reason">
+            <option value="">All</option>
+            <option value="insufficient_info">Insufficient info</option>
+            <option value="provider_error">Provider error</option>
+            <option value="timeout">Timeout</option>
+            <option value="rate_limit">Rate limit</option>
+            <option value="schema_invalid">Schema invalid</option>
+            <option value="both_models_down">Both models down</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Mode</span>
+          <select id="f-mode">
+            <option value="">All</option>
+            <option value="beginner">Beginner</option>
+            <option value="advanced">Advanced</option>
+            <option value="conversational">Conversational</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Session ID</span>
+          <input id="f-session" type="text" placeholder="abc123..." style="width:130px">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Min Latency (ms)</span>
+          <input id="f-latency" type="number" placeholder="5000" style="width:90px">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Max Quality</span>
+          <input id="f-quality" type="number" placeholder="40" style="width:70px">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Window (hours)</span>
+          <input id="f-hours" type="number" value="24" style="width:70px">
+        </div>
+        <div class="filter-group" style="align-self:flex-end; display:flex; gap:6px;">
+          <button class="btn btn-primary" onclick="loadEvents()">Apply</button>
+          <button class="btn btn-ghost" onclick="clearFilters()">Clear</button>
+        </div>
+      </div>
+
+      <div style="background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;">
+        <table class="tbl" id="events-table">
+          <thead>
+            <tr>
+              <th onclick="sortBy('id')">ID</th>
+              <th onclick="sortBy('created_at')">Time</th>
+              <th>Outcome</th>
+              <th>Reason</th>
+              <th>Mode</th>
+              <th class="r" onclick="sortBy('quality_score')">Score</th>
+              <th class="r" onclick="sortBy('latency_ms')">Latency</th>
+              <th class="r" onclick="sortBy('total_tokens')">Tokens</th>
+              <th>Session</th>
+            </tr>
+          </thead>
+          <tbody id="events-body">
+            <tr><td colspan="9" class="spinner">Loading events...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="pagination-bar"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────────────
+    let currentPage   = 'overview';
+    let eventsData    = [];
+    let eventsTotal   = 0;
+    let eventsOffset  = 0;
+    const EVENTS_LIMIT = 50;
+    let sortField     = 'created_at';
+    let sortAsc       = false;
+    let expandedId    = null;
+
+    // ── Navigation ────────────────────────────────────────────
+    function showPage(page) {
+      currentPage = page;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.nav-item')[page === 'overview' ? 0 : 1].classList.add('active');
+
+      if (page === 'events' && eventsData.length === 0) loadEvents();
+    }
+
+    // ── Overview ──────────────────────────────────────────────
+    async function loadOverview() {
+      try {
+        const resp = await fetch('/dashboard/metrics?hours=24');
+        const m    = await resp.json();
+
+        document.getElementById('overview-sub').textContent =
+          `Last ${m.window_hours}h · ${m.total_generations} generations`;
+
+        document.getElementById('metric-cards').innerHTML = `
+          <div class="card">
+            <div class="card-label">Fallback Rate</div>
+            <div class="card-value" style="color:${m.fallback_rate > 0.1 ? 'var(--warning)' : 'var(--success)'}">${(m.fallback_rate*100).toFixed(1)}%</div>
+            <div class="card-sub">${m.outcomes?.fallback || 0} of ${m.total_generations}</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Error Rate</div>
+            <div class="card-value" style="color:${m.error_rate > 0.05 ? 'var(--error)' : 'var(--success)'}">${(m.error_rate*100).toFixed(1)}%</div>
+            <div class="card-sub">${m.outcomes?.error || 0} of ${m.total_generations}</div>
+          </div>
+          <div class="card">
+            <div class="card-label">p95 Latency</div>
+            <div class="card-value">${m.latency_ms.p95 != null ? m.latency_ms.p95 + 'ms' : '—'}</div>
+            <div class="card-sub">p50: ${m.latency_ms.p50 != null ? m.latency_ms.p50 + 'ms' : '—'}</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Total Events</div>
+            <div class="card-value">${m.total_generations}</div>
+            <div class="card-sub">${m.latency_ms.samples} with latency data</div>
+          </div>
+        `;
+
+        const makeRows = (obj) =>
+          Object.entries(obj || {}).map(([k,v]) =>
+            `<tr><td>${k}</td><td class="r">${typeof v === 'object' ? `${(v.fallback_rate*100).toFixed(1)}% (${v.fallback}/${v.total})` : v}</td></tr>`
+          ).join('') || '<tr><td colspan="2" style="color:var(--text-light)">No data</td></tr>';
+
+        document.getElementById('overview-sections').innerHTML = `
+          <div class="section">
+            <div class="section-title">Fallback Reasons</div>
+            <table class="tbl small-tbl">${makeRows(m.fallback_reasons)}</table>
+          </div>
+          <div class="section">
+            <div class="section-title">Per-Model Reliability</div>
+            <table class="tbl small-tbl">${makeRows(m.per_model)}</table>
+          </div>
+          <div class="section">
+            <div class="section-title">By Mode</div>
+            <table class="tbl small-tbl">${makeRows(m.by_mode)}</table>
+          </div>
+        `;
+      } catch (e) {
+        document.getElementById('metric-cards').innerHTML =
+          `<div class="spinner">Failed to load metrics: ${e.message}</div>`;
+      }
+    }
+
+    // ── Events ────────────────────────────────────────────────
+    async function loadEvents(offset = 0) {
+      eventsOffset = offset;
+      const params = new URLSearchParams();
+      const f = {
+        outcome:        document.getElementById('f-outcome').value,
+        fallback_reason: document.getElementById('f-reason').value,
+        mode:           document.getElementById('f-mode').value,
+        session_id:     document.getElementById('f-session').value.trim(),
+        min_latency:    document.getElementById('f-latency').value,
+        max_quality:    document.getElementById('f-quality').value,
+        hours:          document.getElementById('f-hours').value || '24',
+      };
+      Object.entries(f).forEach(([k,v]) => { if (v) params.set(k, v); });
+      params.set('limit', EVENTS_LIMIT);
+      params.set('offset', offset);
+
+      const body = document.getElementById('events-body');
+      body.innerHTML = '<tr><td colspan="9" class="spinner">Loading...</td></tr>';
+
+      try {
+        const resp = await fetch('/dashboard/events?' + params.toString());
+        const data = await resp.json();
+        eventsData  = data.events;
+        eventsTotal = data.total;
+        renderEvents();
+        renderPagination(data);
+      } catch (e) {
+        body.innerHTML = `<tr><td colspan="9" class="spinner">Error: ${e.message}</td></tr>`;
+      }
+    }
+
+    function renderEvents() {
+      const body = document.getElementById('events-body');
+      body.innerHTML = '';
+
+      if (eventsData.length === 0) {
+        body.innerHTML = '<tr><td colspan="9" class="spinner">No events match these filters.</td></tr>';
+        return;
+      }
+
+      eventsData.forEach(ev => {
+        const tagClass = {success:'tag-success',fallback:'tag-fallback',error:'tag-error'}[ev.outcome] || '';
+        const ts  = ev.created_at ? ev.created_at.slice(0,19).replace('T',' ') : '—';
+        const sid = ev.session_id ? ev.session_id.slice(0,8) : '—';
+
+        const mainRow = document.createElement('tr');
+        mainRow.onclick = () => toggleDetail(ev.id);
+        mainRow.innerHTML = `
+          <td>${ev.id}</td>
+          <td>${ts}</td>
+          <td><span class="tag ${tagClass}">${ev.outcome}</span></td>
+          <td>${ev.fallback_reason || '—'}</td>
+          <td>${ev.mode || '—'}</td>
+          <td class="r">${ev.quality_score != null ? ev.quality_score : '—'}</td>
+          <td class="r">${ev.latency_ms != null ? ev.latency_ms + 'ms' : '—'}</td>
+          <td class="r">${ev.total_tokens}</td>
+          <td title="${ev.session_id || ''}">${sid}</td>
+        `;
+        body.appendChild(mainRow);
+
+        // Detail row (hidden by default, populated on click)
+        const detailRow = document.createElement('tr');
+        detailRow.className = 'detail-row';
+        detailRow.id = 'detail-' + ev.id;
+        detailRow.style.display = 'none';
+        detailRow.innerHTML = `<td colspan="9"><div class="detail-panel" id="detail-content-${ev.id}"><div class="spinner">Loading detail...</div></div></td>`;
+        body.appendChild(detailRow);
+      });
+    }
+
+    async function toggleDetail(eventId) {
+      const row = document.getElementById('detail-' + eventId);
+      if (!row) return;
+
+      if (expandedId === eventId) {
+        row.style.display = 'none';
+        expandedId = null;
+        return;
+      }
+
+      // Collapse previous
+      if (expandedId !== null) {
+        const prev = document.getElementById('detail-' + expandedId);
+        if (prev) prev.style.display = 'none';
+      }
+
+      expandedId = eventId;
+      row.style.display = '';
+
+      const container = document.getElementById('detail-content-' + eventId);
+
+      try {
+        const resp = await fetch('/dashboard/events/' + eventId);
+        const ev   = await resp.json();
+
+        let answersHtml = '';
+        if (ev.answers && Object.keys(ev.answers).length > 0) {
+          answersHtml = '<div class="answers-box">' +
+            Object.entries(ev.answers).map(([k,v]) =>
+              `<strong>${k}:</strong> ${v || '—'}`
+            ).join('<br>') +
+            '</div>';
+        }
+
+        let errorHtml = '';
+        if (ev.error_detail) {
+          errorHtml = `<div class="error-box">${ev.error_detail}</div>`;
+        }
+
+        let sessionHtml = '';
+        if (ev.session) {
+          sessionHtml = `
+            <div class="detail-field"><div class="dl">Session Status</div><div class="dv">${ev.session.status}</div></div>
+            <div class="detail-field"><div class="dl">Session Created</div><div class="dv">${(ev.session.created_at || '').slice(0,19).replace('T',' ')}</div></div>
+            <div class="detail-field"><div class="dl">Session Step</div><div class="dv">${ev.session.current_step}</div></div>
+          `;
+        }
+
+        container.innerHTML = `
+          <div class="detail-grid">
+            <div class="detail-field"><div class="dl">Model</div><div class="dv">${ev.model_used || '—'}</div></div>
+            <div class="detail-field"><div class="dl">Used Backup</div><div class="dv">${ev.used_backup}</div></div>
+            <div class="detail-field"><div class="dl">Retry Count</div><div class="dv">${ev.retry_count}</div></div>
+            <div class="detail-field"><div class="dl">Prompt Tokens</div><div class="dv">${ev.prompt_tokens}</div></div>
+            <div class="detail-field"><div class="dl">Completion Tokens</div><div class="dv">${ev.completion_tokens}</div></div>
+            <div class="detail-field"><div class="dl">Answers Provided</div><div class="dv">${ev.answers_provided_count}</div></div>
+            ${sessionHtml}
+          </div>
+          ${errorHtml}
+          ${answersHtml}
+          <div class="detail-link">
+            <a href="/dashboard/events/${ev.id}" target="_blank">Open raw JSON →</a>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = `<div class="spinner">Failed to load detail: ${e.message}</div>`;
+      }
+    }
+
+    function renderPagination(data) {
+      const bar = document.getElementById('pagination-bar');
+      const start = eventsOffset + 1;
+      const end   = Math.min(eventsOffset + EVENTS_LIMIT, data.total);
+      const hasPrev = eventsOffset > 0;
+      const hasNext = data.has_more;
+
+      bar.innerHTML = `
+        <span>Showing ${start}–${end} of ${data.total}</span>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost" ${hasPrev ? '' : 'disabled'} onclick="loadEvents(${eventsOffset - EVENTS_LIMIT})">← Prev</button>
+          <button class="btn btn-ghost" ${hasNext ? '' : 'disabled'} onclick="loadEvents(${eventsOffset + EVENTS_LIMIT})">Next →</button>
+        </div>
+      `;
+    }
+
+    function sortBy(field) {
+      if (sortField === field) {
+        sortAsc = !sortAsc;
+      } else {
+        sortField = field;
+        sortAsc = field === 'id';
+      }
+      eventsData.sort((a, b) => {
+        let va = a[field], vb = b[field];
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+        return sortAsc ? va - vb : vb - va;
+      });
+      renderEvents();
+    }
+
+    function clearFilters() {
+      document.getElementById('f-outcome').value  = '';
+      document.getElementById('f-reason').value   = '';
+      document.getElementById('f-mode').value     = '';
+      document.getElementById('f-session').value  = '';
+      document.getElementById('f-latency').value  = '';
+      document.getElementById('f-quality').value  = '';
+      document.getElementById('f-hours').value    = '24';
+      loadEvents(0);
+    }
+
+    // ── Init ──────────────────────────────────────────────────
+    loadOverview();
+  </script>
+
+</body>
+</html>

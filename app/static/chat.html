@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GTM AI ICP Builder</title>
+
+  <style>
+    * { box-sizing: border-box; font-family: Inter, Arial, sans-serif; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #a8b8dd, #d4eee9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: #1f2937;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      height: 90vh;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: 24px;
+      box-shadow: 0 25px 80px rgba(31,41,55,0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 22px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.65);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.35);
+    }
+
+    .header h1 { margin: 0; font-size: 22px; color: #5b3f9b; }
+    .header p  { margin: 4px 0 0; font-size: 14px; color: #475569; }
+
+    .badge {
+      padding: 8px 12px;
+      background: #eef2ff;
+      color: #5b3f9b;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .start-panel {
+      padding: 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.25);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+    }
+
+    input[type="text"],
+    input[type="email"] {
+      border: 1px solid rgba(100,116,139,0.25);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 15px;
+      outline: none;
+      background: rgba(255,255,255,0.85);
+      width: 100%;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus {
+      border-color: #6f50b5;
+      box-shadow: 0 0 0 3px rgba(111,80,181,0.12);
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #174b63;
+      color: white;
+      transition: all 0.2s ease;
+    }
+
+    button:hover   { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(23,75,99,0.22); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .chat {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message {
+      max-width: 78%;
+      padding: 14px 16px;
+      border-radius: 18px;
+      line-height: 1.45;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+
+    .bot  { align-self: flex-start; background: rgba(255,255,255,0.85); border-bottom-left-radius: 6px; color: #334155; }
+    .user { align-self: flex-end;   background: #174b63;               border-bottom-right-radius: 6px; color: white; }
+    .typing { font-style: italic; color: #64748b; }
+
+    /* ── Options area: appears between chat and input bar ── */
+    .options-area {
+      padding: 10px 24px 4px;
+      display: none;          /* shown by JS when ui_hint is present */
+      flex-wrap: wrap;
+      gap: 8px;
+      background: rgba(255,255,255,0.2);
+      border-top: 1px solid rgba(255,255,255,0.5);
+    }
+
+    /* Radio-style pill buttons */
+    .option-pill {
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 2px solid #5b3f9b;
+      background: white;
+      color: #5b3f9b;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .option-pill:hover,
+    .option-pill.selected {
+      background: #5b3f9b;
+      color: white;
+    }
+
+    /* Checkbox option rows */
+    .option-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(91,63,155,0.3);
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      color: #334155;
+      user-select: none;
+    }
+
+    .option-checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #5b3f9b;
+    }
+
+    .option-checkbox-label:hover { border-color: #5b3f9b; }
+
+    /* "Confirm selection" button for checkboxes */
+    .option-confirm-btn {
+      margin-left: auto;
+      padding: 9px 20px;
+      border-radius: 12px;
+      background: #5b3f9b;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      align-self: flex-end;
+    }
+
+    .option-confirm-btn:hover { background: #4a3080; }
+
+    /* Dropdown select */
+    .option-select {
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(91,63,155,0.35);
+      background: white;
+      font-size: 14px;
+      color: #334155;
+      cursor: pointer;
+      outline: none;
+      min-width: 200px;
+    }
+
+    .option-select:focus { border-color: #5b3f9b; box-shadow: 0 0 0 3px rgba(111,80,181,0.12); }
+
+    /* Input bar */
+    .input-area {
+      padding: 18px 24px;
+      display: flex;
+      gap: 12px;
+      border-top: 1px solid rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.35);
+    }
+
+    .input-area input { flex: 1; }
+
+    /* Result card (unchanged) */
+    .result-card {
+      max-width: 100%;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(111,80,181,0.18);
+      border-radius: 20px;
+      padding: 20px;
+      margin-top: 8px;
+      box-shadow: 0 14px 32px rgba(15,23,42,0.08);
+    }
+
+    .result-card h2 { margin: 0 0 12px; color: #5b3f9b; font-size: 20px; }
+    .result-card h3 { margin: 18px 0 8px; color: #174b63; font-size: 16px; }
+    .result-card p  { margin: 6px 0; color: #334155; line-height: 1.5; }
+
+    .mode-pill {
+      display: inline-block;
+      margin: 8px 0;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #5b3f9b;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      text-transform: capitalize;
+    }
+
+    pre {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 14px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #334155;
+    }
+
+    .download-link {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #174b63;
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 760px) {
+      .app { height: 95vh; }
+      .form-grid { grid-template-columns: 1fr; }
+      .message { max-width: 90%; }
+      .header { align-items: flex-start; flex-direction: column; gap: 10px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="header">
+      <div>
+        <h1>GTM AI ICP Builder</h1>
+        <p>Build a target customer profile and ready search recipe.</p>
+      </div>
+      <div class="badge" id="statusBadge">Not started</div>
+    </div>
+
+    <div class="start-panel" id="startPanel">
+      <div class="form-grid">
+        <input id="emailInput"    type="email" placeholder="Email address (optional)" />
+        <input id="businessInput" type="text"  placeholder="Business name (optional)" />
+        <button id="startBtn">Start Chat</button>
+      </div>
+    </div>
+
+    <div class="chat" id="chatBox">
+      <div class="message bot">Click "Start Chat" to begin building your target customer profile.</div>
+    </div>
+
+    <!--
+      Options area — hidden by default.
+      Populated by renderOptions() when the server returns a ui_hint.
+      Sits between the chat log and the text input bar so it feels
+      like a natural extension of the conversation.
+    -->
+    <div class="options-area" id="optionsArea"></div>
+
+    <div class="input-area">
+      <input id="messageInput" type="text" placeholder="Start the chat first..." disabled />
+      <button id="sendBtn" disabled>Send</button>
+    </div>
+  </div>
+
+  <script>
+    let sessionId  = null;
+    let completed  = false;
+
+    const startBtn     = document.getElementById("startBtn");
+    const sendBtn      = document.getElementById("sendBtn");
+    const emailInput   = document.getElementById("emailInput");
+    const businessInput = document.getElementById("businessInput");
+    const messageInput = document.getElementById("messageInput");
+    const chatBox      = document.getElementById("chatBox");
+    const statusBadge  = document.getElementById("statusBadge");
+    const startPanel   = document.getElementById("startPanel");
+    const optionsArea  = document.getElementById("optionsArea");
+
+    // Tracks checkbox selections across a multi-select turn.
+    let selectedCheckboxValues = new Set();
+
+    // ── Chat helpers ──────────────────────────────────────────────────────
+
+    function addMessage(text, sender = "bot") {
+      const div = document.createElement("div");
+      div.className = `message ${sender}`;
+      div.textContent = text || "";
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      return div;
+    }
+
+    function addTyping()        { return addMessage("Thinking...", "bot typing"); }
+    function removeTyping(el)   { if (el) el.remove(); }
+
+    function setChatEnabled(enabled) {
+      messageInput.disabled = !enabled;
+      sendBtn.disabled      = !enabled;
+      messageInput.placeholder = enabled ? "Type your answer..." : "Start the chat first...";
+    }
+
+    function safeJson(value) {
+      try   { return JSON.stringify(value || {}, null, 2); }
+      catch { return "Unable to display this section."; }
+    }
+
+    function escapeHtml(text) {
+      return String(text || "")
+        .replaceAll("&",  "&amp;")
+        .replaceAll("<",  "&lt;")
+        .replaceAll(">",  "&gt;")
+        .replaceAll('"',  "&quot;")
+        .replaceAll("'",  "&#039;");
+    }
+
+    // ── Options area ──────────────────────────────────────────────────────
+
+    /**
+     * Renders a constrained input control based on ui_hint from the server.
+     *
+     * hint shape: { type: "radio"|"checkbox"|"dropdown",
+     *               options: [{label, value}],
+     *               allow_custom: bool }
+     *
+     * allow_custom=false → text input hidden; only the control is active.
+     * allow_custom=true  → text input stays enabled; control is a shortcut.
+     */
+    function renderOptions(hint) {
+      optionsArea.innerHTML = "";
+      selectedCheckboxValues.clear();
+
+      if (!hint || !hint.options || hint.options.length === 0) {
+        optionsArea.style.display = "none";
+        showTextInput();
+        return;
+      }
+
+      if (hint.type === "radio") {
+        hint.options.forEach(opt => {
+          const pill = document.createElement("button");
+          pill.className   = "option-pill";
+          pill.textContent = opt.label;
+          pill.onclick     = () => selectOption(opt.value, opt.label);
+          optionsArea.appendChild(pill);
+        });
+
+      } else if (hint.type === "checkbox") {
+        hint.options.forEach(opt => {
+          const label = document.createElement("label");
+          label.className = "option-checkbox-label";
+
+          const cb    = document.createElement("input");
+          cb.type     = "checkbox";
+          cb.value    = opt.value;
+          cb.onchange = e => {
+            if (e.target.checked) selectedCheckboxValues.add(opt.value);
+            else                  selectedCheckboxValues.delete(opt.value);
+          };
+
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(" " + opt.label));
+          optionsArea.appendChild(label);
+        });
+
+        const confirmBtn      = document.createElement("button");
+        confirmBtn.textContent = "Confirm selection";
+        confirmBtn.className  = "option-confirm-btn";
+        confirmBtn.onclick    = sendSelectedCheckboxes;
+        optionsArea.appendChild(confirmBtn);
+
+      } else if (hint.type === "dropdown") {
+        const select = document.createElement("select");
+        select.className = "option-select";
+        hint.options.forEach(opt => {
+          const option       = document.createElement("option");
+          option.value       = opt.value;
+          option.textContent = opt.label;
+          select.appendChild(option);
+        });
+
+        const confirmBtn      = document.createElement("button");
+        confirmBtn.textContent = "Confirm";
+        confirmBtn.className  = "option-confirm-btn";
+        confirmBtn.onclick    = () => {
+          const i = select.selectedIndex;
+          selectOption(select.value, select.options[i].text);
+        };
+
+        optionsArea.appendChild(select);
+        optionsArea.appendChild(confirmBtn);
+      }
+
+      optionsArea.style.display = "flex";
+
+      // If the user must choose from the options (no free text allowed), hide
+      // the text input so they can't bypass the control.
+      if (hint.allow_custom === false) {
+        hideTextInput();
+      } else {
+        showTextInput();
+      }
+    }
+
+    function clearOptions() {
+      optionsArea.innerHTML  = "";
+      optionsArea.style.display = "none";
+      selectedCheckboxValues.clear();
+      showTextInput();
+    }
+
+    function hideTextInput() {
+      messageInput.style.display = "none";
+      sendBtn.style.display      = "none";
+    }
+
+    function showTextInput() {
+      messageInput.style.display = "";
+      sendBtn.style.display      = "";
+    }
+
+    /**
+     * Called when the user clicks a radio pill or confirms a dropdown.
+     * Shows the selection as a user bubble, then sends the value to the server.
+     */
+    function selectOption(value, label) {
+      addMessage(label || value, "user");
+      clearOptions();
+      doSend(value);
+    }
+
+    /**
+     * Called when the user clicks "Confirm selection" on a checkbox group.
+     * Joins all checked values, shows them as a user bubble, sends to server.
+     */
+    function sendSelectedCheckboxes() {
+      if (selectedCheckboxValues.size === 0) return;
+      const values = Array.from(selectedCheckboxValues).join(", ");
+      addMessage(values, "user");
+      clearOptions();
+      doSend(values);
+    }
+
+    // ── Server communication ──────────────────────────────────────────────
+
+    /**
+     * Core send function used by both free-text input and option controls.
+     * Keeps the two paths DRY — both end up here.
+     */
+    async function doSend(message) {
+      if (!message || !sessionId || completed) return;
+
+      setChatEnabled(false);
+      const typing = addTyping();
+
+      try {
+        const response = await fetch("/ai/onboarding/message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId, message }),
+        });
+
+        if (!response.ok) throw new Error("Failed to send message.");
+
+        const data = await response.json();
+        removeTyping(typing);
+        handleServerResponse(data);
+
+      } catch {
+        removeTyping(typing);
+        addMessage("Something went wrong. Please try again.", "bot");
+        setChatEnabled(true);
+      }
+    }
+
+    /**
+     * Handles every non-start server response in one place.
+     * Called by doSend() and startChat() alike.
+     */
+    function handleServerResponse(data) {
+      if (data.status === "completed") {
+        completed = true;
+        statusBadge.textContent  = "Completed";
+        messageInput.placeholder = "ICP completed";
+        setChatEnabled(false);
+        clearOptions();
+        addMessage("Great — I've created your ICP profile and ready search recipe.", "bot");
+        renderFinalResult(data);
+        return;
+      }
+
+      const modeLabel = data.mode ? `${data.mode} mode` : "In progress";
+      statusBadge.textContent = `${modeLabel} · Step ${data.current_step + 1}`;
+
+      if (data.mode_instruction) addMessage(data.mode_instruction, "bot");
+      addMessage(data.question, "bot");
+
+      // Render constrained input control if the server sent a hint,
+      // otherwise clear any previous control and restore free-text input.
+      if (data.ui_hint) {
+        renderOptions(data.ui_hint);
+      } else {
+        clearOptions();
+      }
+
+      setChatEnabled(true);
+      messageInput.focus();
+    }
+
+    // ── Entry points ──────────────────────────────────────────────────────
+
+    async function startChat() {
+      startBtn.disabled = true;
+      const typing = addTyping();
+
+      try {
+        const response = await fetch("/ai/onboarding/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email:         emailInput.value   || null,
+            business_name: businessInput.value || null,
+          }),
+        });
+
+        if (!response.ok) throw new Error("Failed to start onboarding.");
+
+        const data = await response.json();
+        sessionId  = data.session_id;
+
+        removeTyping(typing);
+        chatBox.innerHTML = "";           // clear the pre-start placeholder
+        startPanel.classList.add("hidden");
+        statusBadge.textContent = "Mode selection";
+        setChatEnabled(true);
+
+        addMessage(data.question, "bot");
+        if (data.mode_instruction) addMessage(data.mode_instruction, "bot");
+
+        // Mode selection always comes with a ui_hint (radio buttons).
+        if (data.ui_hint) renderOptions(data.ui_hint);
+
+        messageInput.focus();
+
+      } catch {
+        removeTyping(typing);
+        addMessage("Something went wrong while starting the chat. Please check that the backend is running.", "bot");
+        startBtn.disabled = false;
+      }
+    }
+
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message || !sessionId || completed) return;
+      addMessage(message, "user");
+      messageInput.value = "";
+      clearOptions();   // dismiss any active option control when user types manually
+      doSend(message);
+    }
+
+    // ── Final result rendering (unchanged) ────────────────────────────────
+
+    function renderFinalResult(data) {
+      const icp  = data.icp_output;
+      const card = document.createElement("div");
+      card.className = "result-card";
+
+      if (!icp) {
+        card.innerHTML = "<h2>ICP Completed</h2><p>The session completed, but no ICP output was returned.</p>";
+        chatBox.appendChild(card);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+      }
+
+      const reportUrl = data.report_download_url
+        ? `<a class="download-link" href="${escapeHtml(data.report_download_url)}" target="_blank">Download Word Report</a>`
+        : "";
+
+      card.innerHTML = `
+        <h2>Your GTM ICP Output</h2>
+
+        <h3>Mode</h3>
+        <div class="mode-pill">${escapeHtml(icp.mode || data.mode || "Not specified")}</div>
+
+        <h3>ICP Name</h3>
+        <p>${escapeHtml(icp.icp_name)}</p>
+
+        <h3>ICP Summary</h3>
+        <p>${escapeHtml(icp.icp_summary)}</p>
+
+        <h3>ICP Profile for Backend</h3>
+        <pre>${escapeHtml(safeJson(icp.icp_data))}</pre>
+
+        <h3>Ready Search Recipe</h3>
+        <pre>${escapeHtml(safeJson(icp.search_recipe))}</pre>
+
+        <h3>ICP Quality Review</h3>
+        <pre>${escapeHtml(safeJson(icp.icp_quality))}</pre>
+
+        <h3>Generation Details</h3>
+        <p><strong>Generation method:</strong> ${escapeHtml(icp.generation_method)}</p>
+        <p><strong>Needs review:</strong> ${icp.needs_review ? "Yes" : "No"}</p>
+
+        ${reportUrl}
+      `;
+
+      chatBox.appendChild(card);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // ── Event listeners ───────────────────────────────────────────────────
+
+    startBtn.addEventListener("click", startChat);
+    sendBtn.addEventListener("click", sendMessage);
+    messageInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>

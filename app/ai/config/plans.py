@@ -1,0 +1,38 @@
+PLANS = {
+    "Starter": {
+        "price_monthly": 399,
+        "searches_per_month": 5000,
+        "emails_per_month": 10000,
+        "ai_credits_per_month": 1000,
+        "email_domains": 3,
+        "user_seats": 3,
+        "description": "For individuals and small teams getting started.",
+    },
+    "Growth": {
+        "price_monthly": 499,
+        "searches_per_month": 15000,
+        "emails_per_month": 50000,
+        "ai_credits_per_month": 5000,
+        "email_domains": 10,
+        "user_seats": 10,
+        "description": "For teams building consistent pipeline.",
+    },
+    "Scale": {
+        "price_monthly": 599,
+        "searches_per_month": 50000,
+        "emails_per_month": 100000,
+        "ai_credits_per_month": 15000,
+        "email_domains": "unlimited",
+        "user_seats": "unlimited",
+        "description": "For high-volume outbound.",
+    },
+    "Enterprise": {
+        "price_monthly": None,
+        "searches_per_month": "unlimited",
+        "emails_per_month": 500000,
+        "ai_credits_per_month": "unlimited",
+        "email_domains": "unlimited",
+        "user_seats": "unlimited",
+        "description": "For custom requirements.",
+    },
+}
